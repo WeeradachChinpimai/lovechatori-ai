@@ -35,9 +35,17 @@ new class extends Component
     {{-- Avatar poster --}}
     <div class="mt-4 overflow-hidden rounded-3xl bg-white shadow-xl">
         @if ($avatarUrl)
-            <img src="{{ $avatarUrl }}" alt="avatar" class="w-full">
+            <div x-data="{ loaded: false }" x-init="$refs.img.complete && (loaded = true)"
+                 class="relative aspect-square w-full">
+                {{-- gray shimmer placeholder while the image loads from storage --}}
+                <div x-show="!loaded" class="absolute inset-0 skeleton-shimmer"></div>
+                <img x-ref="img" src="{{ $avatarUrl }}" alt="avatar"
+                     x-on:load="loaded = true"
+                     x-bind:class="loaded ? 'opacity-100' : 'opacity-0'"
+                     class="h-full w-full object-cover transition-opacity duration-500">
+            </div>
         @else
-            <div class="flex aspect-[9/16] items-center justify-center text-6xl">🥤</div>
+            <div class="flex aspect-square items-center justify-center text-6xl">🥤</div>
         @endif
     </div>
 

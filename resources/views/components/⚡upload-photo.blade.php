@@ -57,7 +57,7 @@ new class extends Component
 
     <form wire:submit="submit" class="mt-5 flex flex-1 flex-col"
           x-data="{
-              cam: false, stream: null, facing: 'user', camError: '',
+              cam: false, stream: null, facing: 'user', camError: '', busy: false,
               async start() {
                   this.camError = '';
                   if (!navigator.mediaDevices?.getUserMedia) {
@@ -94,17 +94,28 @@ new class extends Component
                   c.getContext('2d').drawImage(src, 0, 0, dw, dh);
                   return await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
               },
+              upload(file) {
+                  this.$wire.upload('photo', file,
+                      () => { this.busy = false; },                                  // success
+                      () => { this.busy = false; this.camError = 'อัปโหลดไม่สำเร็จ ลองใหม่อีกครั้งนะ'; }, // error
+                  );
+              },
               async shoot() {
                   const v = this.$refs.video;
                   if (!v || !v.videoWidth) return;
+                  this.camError = '';
+                  this.busy = true;                       // show preloader (resize + upload)
+                  await this.$nextTick();
                   const blob = await this.toSmallBlob(v, v.videoWidth, v.videoHeight);
                   this.stop();
-                  this.$wire.upload('photo', new File([blob], 'camera.jpg', { type: 'image/jpeg' }));
+                  this.upload(new File([blob], 'camera.jpg', { type: 'image/jpeg' }));
               },
               async pick(e) {
                   const f = e.target.files[0];
                   if (!f) return;
                   this.camError = '';
+                  this.busy = true;                       // show preloader (resize + upload)
+                  await this.$nextTick();
                   try {
                       const img = await new Promise((res, rej) => {
                           const i = new Image();
@@ -114,8 +125,9 @@ new class extends Component
                       });
                       const blob = await this.toSmallBlob(img, img.naturalWidth, img.naturalHeight);
                       URL.revokeObjectURL(img.src);
-                      this.$wire.upload('photo', new File([blob], 'upload.jpg', { type: 'image/jpeg' }));
+                      this.upload(new File([blob], 'upload.jpg', { type: 'image/jpeg' }));
                   } catch (err) {
+                      this.busy = false;
                       this.camError = 'เปิดรูปนี้ไม่ได้ ลองรูปอื่นหรือถ่ายใหม่นะ';
                   }
                   e.target.value = '';
@@ -148,8 +160,11 @@ new class extends Component
                 @endif
             </div>
 
-            <div wire:loading wire:target="photo" class="absolute inset-0 z-20 flex items-center justify-center bg-white/80 text-candy-pink">
-                <span class="animate-pulse text-sm font-semibold">กำลังอัปโหลด…</span>
+            {{-- preloader: covers resize + upload --}}
+            <div x-show="busy" x-transition.opacity style="display:none"
+                 class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-white/90 text-candy-pink">
+                <div class="h-12 w-12 animate-spin rounded-full border-4 border-candy-pink/25 border-t-candy-pink"></div>
+                <span class="text-sm font-semibold">กำลังเตรียมรูป…</span>
             </div>
         </div>
 

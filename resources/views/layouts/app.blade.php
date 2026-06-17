@@ -51,6 +51,14 @@
                 radial-gradient(circle at 50% 100%, #def8ec 0, transparent 45%),
                 #fff7fb;
         }
+        /* loading skeleton shimmer */
+        .skeleton-shimmer {
+            background: linear-gradient(100deg, #e7edf3 28%, #f4f8fc 50%, #e7edf3 72%);
+            background-size: 200% 100%;
+            animation: shimmer 1.3s ease-in-out infinite;
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        [x-cloak] { display: none !important; }
     </style>
 
     @livewireStyles
