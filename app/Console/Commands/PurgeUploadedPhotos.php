@@ -22,10 +22,11 @@ class PurgeUploadedPhotos extends Command
             ->get();
 
         $deleted = 0;
+        $disk = Storage::disk(config('slush.media_disk'));
 
         foreach ($sessions as $session) {
-            if (Storage::disk('public')->exists($session->uploaded_image_path)) {
-                Storage::disk('public')->delete($session->uploaded_image_path);
+            if ($disk->exists($session->uploaded_image_path)) {
+                $disk->delete($session->uploaded_image_path);
             }
 
             $session->update([

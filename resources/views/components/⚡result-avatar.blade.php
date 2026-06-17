@@ -22,7 +22,7 @@ new class extends Component
 
         $this->analysis = $this->session->ai_response_json ?? [];
         $this->avatarUrl = $this->session->generated_avatar_path
-            ? Storage::disk('public')->url($this->session->generated_avatar_path)
+            ? Storage::disk(config('slush.media_disk'))->url($this->session->generated_avatar_path)
             : '';
         $this->shareUrl = route('play.result', $uuid);
     }

@@ -36,7 +36,7 @@ new class extends Component
     {
         $this->validate();
 
-        $path = $this->photo->store('uploads', 'public');
+        $path = $this->photo->store('uploads', config('slush.media_disk'));
 
         $session = SlushSession::create([
             'session_uuid' => (string) Str::uuid(),

@@ -33,19 +33,24 @@ new class extends Component
 
         $session->update(['status' => 'processing']);
 
-        $imagePath = $session->uploaded_image_path
-            ? Storage::disk('public')->path($session->uploaded_image_path)
-            : '';
+        // Read the photo bytes from the configured disk (local or S3).
+        $disk = Storage::disk(config('slush.media_disk'));
+        $bytes = null;
+        $mime = 'image/jpeg';
+        if ($session->uploaded_image_path && $disk->exists($session->uploaded_image_path)) {
+            $bytes = $disk->get($session->uploaded_image_path);
+            $mime = $disk->mimeType($session->uploaded_image_path) ?: 'image/jpeg';
+        }
 
         try {
-            $analysis = $ai->analyze($imagePath);
-            $avatar = $ai->generateAvatar($imagePath, $analysis);
+            $analysis = $ai->analyze($bytes, $mime, $this->uuid);
+            $avatar = $ai->generateAvatar($bytes, $mime, $analysis);
             $usedFallback = $avatar['fallback'];
         } catch (\Throwable $e) {
             // Last-resort safety net: never block the player, still hand out a coupon.
             Log::error('Slush processing failed, using full fallback.', ['error' => $e->getMessage()]);
-            $analysis = $ai->analyze('');
-            $avatar = $ai->generateAvatar('', $analysis);
+            $analysis = $ai->analyze(null, $mime, $this->uuid);
+            $avatar = $ai->generateAvatar(null, $mime, $analysis);
             $usedFallback = true;
         }
 

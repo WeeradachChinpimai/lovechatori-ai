@@ -7,6 +7,11 @@ return [
     'staff_user' => env('SLUSH_STAFF_USER', 'staff'),
     'staff_password' => env('SLUSH_STAFF_PASSWORD', ''),
 
+    // Disk for uploaded photos + generated avatars.
+    // Use 'public' for local dev; set SLUSH_MEDIA_DISK=s3 on production
+    // (Laravel Cloud object storage) so files persist and are shared across instances.
+    'media_disk' => env('SLUSH_MEDIA_DISK', 'public'),
+
     // How long the original uploaded photo is kept before auto-deletion.
     'image_retention_hours' => (int) env('SLUSH_IMAGE_RETENTION_HOURS', 24),
 

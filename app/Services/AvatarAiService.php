@@ -80,21 +80,23 @@ class AvatarAiService
     /**
      * Analyse the uploaded face photo and return the fun JSON profile.
      *
-     * @param  string  $absoluteImagePath  Full filesystem path to the photo.
+     * @param  string|null  $imageBytes  Raw image contents (disk-agnostic), or null.
+     * @param  string  $mime  Image mime type, e.g. image/jpeg.
+     * @param  string  $seed  Stable seed (session uuid) for deterministic fallback.
      */
-    public function analyze(string $absoluteImagePath): array
+    public function analyze(?string $imageBytes, string $mime, string $seed): array
     {
-        if (! is_file($absoluteImagePath)) {
-            return $this->fallbackAnalysis($absoluteImagePath);
+        if ($imageBytes === null || $imageBytes === '') {
+            return $this->fallbackAnalysis($seed);
         }
 
         try {
             if ($key = config('services.anthropic.key')) {
-                return $this->normalizeAnalysis($this->analyzeWithAnthropic($absoluteImagePath, $key));
+                return $this->normalizeAnalysis($this->analyzeWithAnthropic($imageBytes, $mime, $key));
             }
 
             if ($key = config('services.openai.key')) {
-                return $this->normalizeAnalysis($this->analyzeWithOpenAi($absoluteImagePath, $key));
+                return $this->normalizeAnalysis($this->analyzeWithOpenAi($imageBytes, $mime, $key));
             }
         } catch (Throwable $e) {
             Log::warning('AvatarAiService analyze failed, using fallback.', [
@@ -102,20 +104,20 @@ class AvatarAiService
             ]);
         }
 
-        return $this->fallbackAnalysis($absoluteImagePath);
+        return $this->fallbackAnalysis($seed);
     }
 
     /**
-     * Generate the avatar image. Returns the relative path on the "public"
-     * disk plus whether the fallback poster was used.
+     * Generate the avatar image and store it on the configured media disk.
+     * Returns the disk-relative path plus whether the fallback poster was used.
      *
      * @return array{path:string, fallback:bool}
      */
-    public function generateAvatar(string $absoluteImagePath, array $analysis): array
+    public function generateAvatar(?string $imageBytes, string $mime, array $analysis): array
     {
         if ($key = config('services.openai.key')) {
             try {
-                $path = $this->generateWithOpenAi($absoluteImagePath, $analysis, $key);
+                $path = $this->generateWithOpenAi($imageBytes, $mime, $analysis, $key);
 
                 if ($path) {
                     return ['path' => $path, 'fallback' => false];
@@ -130,9 +132,15 @@ class AvatarAiService
         // Always-available offline poster.
         $svg = SlushAvatarPoster::make($analysis);
         $path = 'avatars/'.Str::uuid()->toString().'.svg';
-        Storage::disk('public')->put($path, $svg);
+        $this->store($path, $svg);
 
         return ['path' => $path, 'fallback' => true];
+    }
+
+    /** Store generated media on the configured disk, public-readable. */
+    protected function store(string $path, string $contents): void
+    {
+        Storage::disk(config('slush.media_disk'))->put($path, $contents, 'public');
     }
 
     /** The prompt used for real image generation back-ends. */
@@ -150,11 +158,11 @@ class AvatarAiService
 
     // --- Providers -------------------------------------------------------
 
-    protected function analyzeWithAnthropic(string $path, string $apiKey): array
+    protected function analyzeWithAnthropic(string $bytes, string $mime, string $apiKey): array
     {
         $base = rtrim(config('services.anthropic.base_url'), '/');
-        $media = $this->mediaType($path);
-        $data = base64_encode((string) file_get_contents($path));
+        $media = $this->mediaType($mime);
+        $data = base64_encode($bytes);
 
         $response = Http::timeout(15)
             ->withHeaders([
@@ -183,11 +191,11 @@ class AvatarAiService
         return $this->extractJson($text);
     }
 
-    protected function analyzeWithOpenAi(string $path, string $apiKey): array
+    protected function analyzeWithOpenAi(string $bytes, string $mime, string $apiKey): array
     {
         $base = rtrim(config('services.openai.base_url'), '/');
-        $media = $this->mediaType($path);
-        $data = base64_encode((string) file_get_contents($path));
+        $media = $this->mediaType($mime);
+        $data = base64_encode($bytes);
 
         $response = Http::timeout(config('services.openai.analyze_timeout'))
             ->connectTimeout(15)
@@ -218,7 +226,7 @@ class AvatarAiService
      * available we use the images/edits endpoint with high input fidelity so
      * the character resembles the player; otherwise plain text-to-image.
      */
-    protected function generateWithOpenAi(string $path, array $analysis, string $apiKey): ?string
+    protected function generateWithOpenAi(?string $bytes, string $mime, array $analysis, string $apiKey): ?string
     {
         $base = rtrim(config('services.openai.base_url'), '/');
         $model = config('services.openai.image_model');
@@ -231,9 +239,10 @@ class AvatarAiService
             ->retry(2, 1000, throw: false)
             ->withToken($apiKey);
 
-        if (config('services.openai.use_reference') && is_file($path)) {
+        if (config('services.openai.use_reference') && $bytes !== null && $bytes !== '') {
+            $ext = str_contains($mime, 'png') ? 'png' : (str_contains($mime, 'webp') ? 'webp' : 'jpg');
             $response = $http
-                ->attach('image', (string) file_get_contents($path), basename($path))
+                ->attach('image', $bytes, 'reference.'.$ext)
                 ->post($base.'/v1/images/edits', [
                     'model' => $model,
                     'prompt' => $prompt,
@@ -260,7 +269,7 @@ class AvatarAiService
         }
 
         $storedPath = 'avatars/'.Str::uuid()->toString().'.png';
-        Storage::disk('public')->put($storedPath, base64_decode($b64));
+        $this->store($storedPath, base64_decode($b64));
 
         return $storedPath;
     }
@@ -324,11 +333,14 @@ PROMPT;
         return $decoded;
     }
 
-    protected function mediaType(string $path): string
+    /** Normalise to a media type the AI providers accept. */
+    protected function mediaType(string $mime): string
     {
-        return match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
-            'png' => 'image/png',
-            'webp' => 'image/webp',
+        $mime = strtolower($mime);
+
+        return match (true) {
+            str_contains($mime, 'png') => 'image/png',
+            str_contains($mime, 'webp') => 'image/webp',
             default => 'image/jpeg',
         };
     }
