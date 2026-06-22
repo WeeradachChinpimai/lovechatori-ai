@@ -11,6 +11,7 @@ Route::redirect('/', '/play');
 
 Route::livewire('/play', 'play-landing')->name('play.landing');
 Route::livewire('/play/upload', 'upload-photo')->name('play.upload');
+Route::post('/play/upload-image', [\App\Http\Controllers\UploadController::class, 'store'])->name('play.upload-image');
 Route::livewire('/play/processing/{uuid}', 'processing-avatar')->name('play.processing');
 Route::livewire('/play/result/{uuid}', 'result-avatar')->name('play.result');
 

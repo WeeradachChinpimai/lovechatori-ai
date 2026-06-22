@@ -29,11 +29,51 @@ new class extends Component
 };
 ?>
 
-<div class="flex flex-1 flex-col animate-pop">
-    <h1 class="text-center text-2xl font-bold text-slate-800">นี่คือตัวตนในอนาคตของคุณ! 🎉</h1>
+<div class="flex flex-1 flex-col animate-pop"
+     x-data="{
+        saving: false,
+        async download() {
+            if (this.saving) return;
+            this.saving = true;
+            const url = @js($avatarUrl);
+            const ext = (url.split('?')[0].split('.').pop() || 'png').toLowerCase();
+            try {
+                const res = await fetch(url);
+                const blob = await res.blob();
+                const file = new File([blob], 'slush-avatar.' + ext, { type: blob.type });
+                // Prefer the native share sheet on mobile (lets users save to Photos).
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file], title: 'AI Future Slush Avatar' });
+                } else {
+                    const obj = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = obj; a.download = file.name;
+                    document.body.appendChild(a); a.click(); a.remove();
+                    setTimeout(() => URL.revokeObjectURL(obj), 2000);
+                }
+            } catch (e) {
+                window.open(url, '_blank');
+            } finally {
+                this.saving = false;
+            }
+        },
+        async share() {
+            const data = { title: 'AI Future Slush Avatar', text: 'ดูตัวตนในอนาคตของฉันสิ!', url: @js($shareUrl) };
+            try { if (navigator.share) { await navigator.share(data); } else { await navigator.clipboard.writeText(data.url); alert('คัดลอกลิงก์แล้ว!'); } } catch (e) {}
+        }
+     }">
 
-    {{-- Avatar poster --}}
-    <div class="mt-4 overflow-hidden rounded-3xl bg-white shadow-xl">
+    <x-app-header :back="route('play.upload')">
+        <button type="button" @click="share()" aria-label="แชร์"
+                class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-chillo-blue shadow-soft ring-1 ring-soft transition active:scale-95">
+            <x-icon name="share-2" class="h-5 w-5" />
+        </button>
+    </x-app-header>
+
+    <h1 class="mt-4 text-center text-2xl font-extrabold leading-tight text-chillo-blue">นี่คือตัวตนใน<span class="text-chillo-orange">อนาคต</span>ของคุณ! 🎉</h1>
+
+    {{-- Avatar poster (real AI-generated image) --}}
+    <div class="relative mt-4 overflow-hidden rounded-[32px] border border-soft bg-white shadow-soft">
         @if ($avatarUrl)
             <div x-data="{ loaded: false }" x-init="$refs.img.complete && (loaded = true)"
                  class="relative aspect-square w-full">
@@ -47,102 +87,75 @@ new class extends Component
         @else
             <div class="flex aspect-square items-center justify-center text-6xl">🥤</div>
         @endif
+        <span class="absolute bottom-3 right-3 rounded-full bg-chillo-blue/90 px-3 py-1 text-xs font-bold text-white shadow">#FutureChillo</span>
     </div>
 
     {{-- Character info --}}
     <div class="mt-5 space-y-3">
         <div class="text-center">
-            <p class="text-xs font-semibold uppercase tracking-wide text-candy-pink">ชื่อตัวละคร</p>
-            <p class="text-2xl font-bold text-slate-800">{{ $analysis['character_name'] ?? 'Slush Hero' }}</p>
+            <p class="text-xs font-bold uppercase tracking-wide text-chillo-orange">ชื่อตัวละคร</p>
+            <p class="text-2xl font-extrabold text-chillo-blue">{{ $analysis['character_name'] ?? 'Slush Hero' }}</p>
         </div>
 
         <div class="grid grid-cols-1 gap-3">
             @php
                 $rows = [
-                    ['🛡️', 'บทบาทในอนาคต', $analysis['future_role'] ?? '-'],
-                    ['⚡', 'พลังพิเศษ', $analysis['special_power'] ?? '-'],
-                    ['🥤', 'รสสเลอปี้ที่เหมาะกับคุณ', $analysis['slush_flavor'] ?? '-'],
+                    ['icon' => 'shield',   'label' => 'บทบาทในอนาคต',           'value' => $analysis['future_role'] ?? '-',  'accent' => false],
+                    ['icon' => 'zap',      'label' => 'พลังพิเศษ',               'value' => $analysis['special_power'] ?? '-', 'accent' => false],
+                    ['icon' => 'cup-soda', 'label' => 'รสสเลอปี้ที่เหมาะกับคุณ', 'value' => $analysis['slush_flavor'] ?? '-', 'accent' => true],
                 ];
             @endphp
             @foreach ($rows as $row)
-                <div class="flex items-start gap-3 rounded-2xl bg-white/80 p-4 shadow-sm">
-                    <span class="text-2xl">{{ $row[0] }}</span>
+                <x-info-card class="flex items-start gap-3 p-4">
+                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl {{ $row['accent'] ? 'bg-chillo-orange-light text-chillo-orange' : 'bg-chillo-blue-light text-chillo-blue' }}">
+                        <x-icon :name="$row['icon']" class="h-5 w-5" />
+                    </span>
                     <div>
-                        <p class="text-xs text-slate-400">{{ $row[1] }}</p>
-                        <p class="font-semibold text-slate-700">{{ $row[2] }}</p>
+                        <p class="text-xs font-bold text-chillo-blue">{{ $row['label'] }}</p>
+                        <p class="font-bold {{ $row['accent'] ? 'text-chillo-orange' : 'text-ink' }}">{{ $row['value'] }}</p>
                     </div>
-                </div>
+                </x-info-card>
             @endforeach
         </div>
 
         @if (! empty($analysis['short_caption']))
-            <p class="text-center text-sm italic text-slate-500">“{{ $analysis['short_caption'] }}”</p>
+            <p class="text-center text-sm italic text-ink-soft">“{{ $analysis['short_caption'] }}”</p>
         @endif
     </div>
 
-    {{-- Coupon --}}
+    {{-- Coupon (real code + QR) --}}
     @if ($session->coupon)
-        <div class="relative mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-candy-pink to-candy-yellow p-5 text-white shadow-lg">
-            <p class="text-sm font-semibold opacity-90">🎟️ คูปองส่วนลดของคุณ</p>
-            <p class="mt-1 text-3xl font-bold">{{ $session->coupon->discount_label }}</p>
+        <div class="relative mt-6 overflow-hidden rounded-[28px] bg-chillo-orange p-5 text-white shadow-button">
+            <p class="inline-flex items-center gap-2 text-sm font-bold opacity-95"><x-icon name="ticket-percent" class="h-5 w-5" /> คูปองส่วนลดของคุณ</p>
+            <p class="mt-1 text-3xl font-extrabold">{{ $session->coupon->discount_label }}</p>
             <div class="mt-3 flex items-center justify-between gap-3">
                 <span class="rounded-xl bg-white/25 px-3 py-2 font-mono text-lg font-bold tracking-wider">{{ $session->coupon->code }}</span>
                 <div class="rounded-xl bg-white p-1.5">
                     <img src="{{ \App\Support\Qr::dataUri($shareUrl, 72, [60, 60, 60]) }}" alt="QR คูปอง" width="72" height="72">
                 </div>
             </div>
-            <p class="mt-3 text-xs opacity-90">ใช้ได้ถึง {{ optional($session->coupon->expired_at)->format('d/m/Y H:i') }} น. — แสดงรหัสนี้ที่หน้าร้าน</p>
+            <p class="mt-3 text-xs opacity-95">ใช้ได้ถึง {{ optional($session->coupon->expired_at)->format('d/m/Y H:i') }} น. — แสดงรหัสนี้ที่หน้าร้าน</p>
         </div>
     @endif
 
     {{-- Actions --}}
-    <div class="mt-6 grid grid-cols-1 gap-3"
-         x-data="{
-            saving: false,
-            async download() {
-                if (this.saving) return;
-                this.saving = true;
-                const url = @js($avatarUrl);
-                const ext = (url.split('?')[0].split('.').pop() || 'png').toLowerCase();
-                try {
-                    const res = await fetch(url);
-                    const blob = await res.blob();
-                    const file = new File([blob], 'slush-avatar.' + ext, { type: blob.type });
-                    // Prefer the native share sheet on mobile (lets users save to Photos).
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        await navigator.share({ files: [file], title: 'AI Future Slush Avatar' });
-                    } else {
-                        const obj = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = obj; a.download = file.name;
-                        document.body.appendChild(a); a.click(); a.remove();
-                        setTimeout(() => URL.revokeObjectURL(obj), 2000);
-                    }
-                } catch (e) {
-                    window.open(url, '_blank');
-                } finally {
-                    this.saving = false;
-                }
-            },
-            async share() {
-                const data = { title: 'AI Future Slush Avatar', text: 'ดูตัวตนในอนาคตของฉันสิ!', url: @js($shareUrl) };
-                try { if (navigator.share) { await navigator.share(data); } else { await navigator.clipboard.writeText(data.url); alert('คัดลอกลิงก์แล้ว!'); } } catch (e) {}
-            }
-         }">
+    <div class="mt-6 grid grid-cols-2 gap-3">
         @if ($avatarUrl)
             <button type="button" x-on:click="download()" x-bind:disabled="saving"
-               class="flex items-center justify-center gap-2 rounded-full bg-candy-pink px-6 py-4 text-lg font-bold text-white shadow-lg shadow-candy-pink/40 active:scale-95 disabled:opacity-60">
-                <span x-show="!saving">💾 บันทึกรูป</span>
+               class="inline-flex min-h-[56px] items-center justify-center gap-2 rounded-full bg-chillo-blue px-4 text-base font-extrabold text-white shadow-soft transition active:scale-[0.98] disabled:opacity-60">
+                <x-icon name="download" class="h-5 w-5" />
+                <span x-show="!saving">บันทึกผลลัพธ์</span>
                 <span x-show="saving" style="display:none">กำลังบันทึก…</span>
             </button>
+        @else
+            <button type="button" @click="share()"
+                    class="inline-flex min-h-[56px] items-center justify-center gap-2 rounded-full bg-chillo-blue px-4 text-base font-extrabold text-white shadow-soft transition active:scale-[0.98]">
+                <x-icon name="share-2" class="h-5 w-5" /> แชร์ให้เพื่อน
+            </button>
         @endif
-        <button type="button" @click="share()"
-                class="flex items-center justify-center gap-2 rounded-full bg-candy-blue px-6 py-4 text-lg font-bold text-white shadow active:scale-95">
-            📤 แชร์ให้เพื่อน
-        </button>
         <a href="{{ route('play.upload') }}" wire:navigate
-           class="flex items-center justify-center gap-2 rounded-full bg-white px-6 py-4 text-lg font-bold text-candy-pink shadow active:scale-95">
-            🔁 เล่นอีกครั้ง
+           class="inline-flex min-h-[56px] items-center justify-center gap-2 rounded-full bg-white px-4 text-base font-extrabold text-chillo-blue shadow-soft ring-2 ring-chillo-blue transition active:scale-[0.98]">
+            <x-icon name="rotate-ccw" class="h-5 w-5" /> ลองใหม่อีกครั้ง
         </a>
     </div>
 </div>
