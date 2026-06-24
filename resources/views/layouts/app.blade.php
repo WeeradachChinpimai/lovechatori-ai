@@ -130,7 +130,7 @@
          (on <body>) shows through if the image is slow/unavailable. --}}
     <div aria-hidden="true"
          class="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
-         style="background-image: url('{{ asset('background.png') }}');"></div>
+         style="background-image: url('{{ asset('background.webp') }}');"></div>
 
     <main class="mx-auto flex min-h-full w-full max-w-md flex-col px-5 py-6">
         {{ $slot }}

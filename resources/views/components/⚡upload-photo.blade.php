@@ -8,7 +8,7 @@ new class extends Component
 {
     // S3/disk path of the already-uploaded photo (set via direct upload, not Livewire temp).
     public ?string $photo = null;
-    public bool $consent = false;
+    public bool $consent = true;
 
     public function rules(): array
     {
@@ -39,12 +39,15 @@ new class extends Component
 ?>
 
 <div class="flex flex-1 flex-col">
-    <x-app-header :back="route('play.landing')" />
-
-    <div class="mt-4 text-center">
-        <h1 class="text-[26px] font-extrabold leading-tight text-chillo-blue">ถ่ายรูป<span class="text-chillo-orange">ใบหน้า</span>ของคุณ</h1>
-        <p class="mt-1 text-sm text-ink-soft">ถ่ายหน้าตรง แสงสว่าง ยิ้มได้เลย!</p>
+    {{-- App bar: fixed back button on the left, title aligned on the same row --}}
+    <div class="relative flex min-h-11 items-center justify-center">
+        <a href="{{ route('play.landing') }}" wire:navigate aria-label="กลับ"
+           class="absolute left-0 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-chillo-blue shadow-soft ring-1 ring-soft transition active:scale-95">
+            <x-icon name="arrow-left" class="h-5 w-5" />
+        </a>
+        <h1 class="px-12 text-center text-xl font-extrabold leading-tight text-chillo-blue">ถ่ายรูป<span class="text-chillo-orange">ใบหน้า</span>ของคุณ</h1>
     </div>
+    <p class="mt-1 text-center text-sm text-ink-soft">ถ่ายหน้าตรง แสงสว่าง ยิ้มได้เลย!</p>
 
     <form wire:submit="submit" class="mt-5 flex flex-1 flex-col"
           x-data="{
@@ -149,7 +152,7 @@ new class extends Component
         {{-- Preview / live camera --}}
         <div class="relative">
         {{-- decorative CHILLO slushy cup peeking from the bottom-left corner --}}
-        <img src="{{ asset('element-1-camera.png') }}" alt="" aria-hidden="true"
+        <img src="{{ asset('element-1-camera.webp') }}" alt="" aria-hidden="true"
              class="pointer-events-none absolute -bottom-6 -left-6 z-10 w-24 select-none drop-shadow-xl">
         <div class="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-[32px] border-2 border-dashed border-y-chillo-sky/40 border-l-chillo-blue border-r-chillo-orange bg-[#F7FBFF]">
             {{-- live camera feed --}}
@@ -236,5 +239,9 @@ new class extends Component
                 <x-icon name="chevron-right" class="h-5 w-5" />
             </span>
         </button>
+
+        <p class="mt-3 text-center text-xs leading-snug text-ink-faint">
+            การกดปุ่ม “สร้าง Avatar เลย” ถือว่าคุณยอมรับเงื่อนไขข้างต้น
+        </p>
     </form>
 </div>

@@ -27,7 +27,8 @@ class AvatarAiService
     protected const ARCHETYPES = [
         [
             'character_name' => 'Captain Berry Frost',
-            'future_role' => 'ผู้พิทักษ์เมืองน้ำแข็งสายสดใส',
+            'future_role' => 'คุณหมอแห่งอนาคต',
+            'outfit_en' => 'a friendly doctor in a clean white medical coat with a stethoscope and a digital health scanner',
             'personality' => 'ร่าเริง ชอบผจญภัย และมีพลังบวก',
             'slush_flavor' => 'Strawberry Frost',
             'slush_color' => 'pink',
@@ -37,7 +38,8 @@ class AvatarAiService
         ],
         [
             'character_name' => 'Sky Blue Ranger',
-            'future_role' => 'นักสำรวจท้องฟ้าแห่งเมืองน้ำแข็ง',
+            'future_role' => 'นักบินอวกาศ',
+            'outfit_en' => 'an astronaut in a white-and-blue space suit with mission patches, holding the helmet under one arm',
             'personality' => 'ใจเย็น มั่นใจ และชอบช่วยเหลือเพื่อน',
             'slush_flavor' => 'Blue Soda Splash',
             'slush_color' => 'blue',
@@ -47,7 +49,8 @@ class AvatarAiService
         ],
         [
             'character_name' => 'Lime Spark Hero',
-            'future_role' => 'จอมพลังสวนสนุกสายกรีน',
+            'future_role' => 'เชฟมืออาชีพ',
+            'outfit_en' => 'a professional chef in a crisp white chef jacket and toque with an apron, holding a whisk',
             'personality' => 'สดใส กระฉับกระเฉง และมองโลกในแง่ดี',
             'slush_flavor' => 'Green Apple Pop',
             'slush_color' => 'green',
@@ -57,7 +60,8 @@ class AvatarAiService
         ],
         [
             'character_name' => 'Sunny Mango Star',
-            'future_role' => 'ดาวเด่นแห่งเทศกาลแสงอาทิตย์',
+            'future_role' => 'นักวิทยาศาสตร์',
+            'outfit_en' => 'a scientist in a white lab coat with safety goggles and a tablet, surrounded by holographic gadgets',
             'personality' => 'อบอุ่น เป็นมิตร และมีพลังบวกล้นเหลือ',
             'slush_flavor' => 'Mango Sunshine',
             'slush_color' => 'yellow',
@@ -67,7 +71,8 @@ class AvatarAiService
         ],
         [
             'character_name' => 'Grape Galaxy Guardian',
-            'future_role' => 'ผู้พิทักษ์กาแล็กซีองุ่นม่วง',
+            'future_role' => 'นักบิน',
+            'outfit_en' => 'an airline pilot in a smart navy uniform with a captain hat, epaulettes and a wings badge',
             'personality' => 'ช่างฝัน สร้างสรรค์ และมีจินตนาการล้นฟ้า',
             'slush_flavor' => 'Grape Galaxy',
             'slush_color' => 'purple',
@@ -91,12 +96,18 @@ class AvatarAiService
         }
 
         try {
-            if ($key = config('services.anthropic.key')) {
-                return $this->normalizeAnalysis($this->analyzeWithAnthropic($imageBytes, $mime, $key));
-            }
+            if (config('services.ai.use_gemini')) {
+                if ($key = config('services.gemini.key')) {
+                    return $this->normalizeAnalysis($this->analyzeWithGemini($imageBytes, $mime, $key));
+                }
+            } else {
+                if ($key = config('services.anthropic.key')) {
+                    return $this->normalizeAnalysis($this->analyzeWithAnthropic($imageBytes, $mime, $key));
+                }
 
-            if ($key = config('services.openai.key')) {
-                return $this->normalizeAnalysis($this->analyzeWithOpenAi($imageBytes, $mime, $key));
+                if ($key = config('services.openai.key')) {
+                    return $this->normalizeAnalysis($this->analyzeWithOpenAi($imageBytes, $mime, $key));
+                }
             }
         } catch (Throwable $e) {
             Log::warning('AvatarAiService analyze failed, using fallback.', [
@@ -115,18 +126,27 @@ class AvatarAiService
      */
     public function generateAvatar(?string $imageBytes, string $mime, array $analysis): array
     {
-        if ($key = config('services.openai.key')) {
-            try {
+        $useGemini = config('services.ai.use_gemini');
+
+        try {
+            if ($useGemini && ($key = config('services.gemini.key'))) {
+                $path = $this->generateWithGemini($imageBytes, $mime, $analysis, $key);
+
+                if ($path) {
+                    return ['path' => $path, 'fallback' => false];
+                }
+            } elseif (! $useGemini && ($key = config('services.openai.key'))) {
                 $path = $this->generateWithOpenAi($imageBytes, $mime, $analysis, $key);
 
                 if ($path) {
                     return ['path' => $path, 'fallback' => false];
                 }
-            } catch (Throwable $e) {
-                Log::warning('OpenAI image generation failed, using SVG poster.', [
-                    'message' => $e->getMessage(),
-                ]);
             }
+        } catch (Throwable $e) {
+            Log::warning('AI image generation failed, using SVG poster.', [
+                'provider' => $useGemini ? 'gemini' : 'openai',
+                'message' => $e->getMessage(),
+            ]);
         }
 
         // Always-available offline poster.
@@ -148,12 +168,23 @@ class AvatarAiService
     {
         $flavor = $analysis['slush_flavor'] ?? 'colorful slush';
         $color = $analysis['slush_color'] ?? 'pink';
+        $outfit = $analysis['outfit_en'] ?? 'a detailed, colorful future-career uniform with themed accessories and props';
 
-        return "Create a cute 3D anime-style future avatar based on the uploaded face reference. "
-            ."Make the character playful, friendly, colorful, and suitable for kids and family. "
+        return "Create a cute, bright and vibrant 3D animated character avatar based on the uploaded face "
+            ."reference, in a polished Disney/Pixar-style cute 3D render: big sparkly expressive eyes, soft "
+            ."rounded adorable features, glossy smooth shading, rich saturated cheerful colors, full of life and "
+            ."charm. Cute and playful, NOT photoreal, NOT a flat 2D cartoon. "
+            ."IMPORTANT for likeness: keep the person's real face shape, facial features and exact hairstyle from "
+            ."the uploaded photo, adapted into this cute 3D style so it clearly looks like them — and make them "
+            ."look cool and stylish. "
+            ."The character has a clear future profession: dress them in {$outfit}. "
+            ."Show profession-specific clothing, accessories and props so the career is obvious at a glance. "
             ."The character is holding a {$color} {$flavor} slush drink. "
-            ."Use bright candy colors, soft lighting, minimal background, futuristic ice city theme, "
-            ."happy mood, high quality, square 1:1 composition with the character centered.";
+            ."Place them in a bright, colorful, slightly futuristic CHILLO-themed background scene that clearly "
+            ."matches their future profession (for example a science lab for a scientist, a kitchen for a chef, "
+            ."a space station for an astronaut, a cockpit for a pilot), with soft glowing ice-city and slush vibes. "
+            ."Tasteful blue and orange brand accents, happy confident expression, upper-body framing so the outfit "
+            ."is clearly visible, high quality, square 1:1 composition with the character centered.";
     }
 
     // --- Providers -------------------------------------------------------
@@ -274,16 +305,101 @@ class AvatarAiService
         return $storedPath;
     }
 
+    /** Analyse the face photo with Google Gemini (vision -> strict JSON). */
+    protected function analyzeWithGemini(string $bytes, string $mime, string $apiKey): array
+    {
+        $base = rtrim(config('services.gemini.base_url'), '/');
+        $model = config('services.gemini.text_model');
+        $media = $this->mediaType($mime);
+        $data = base64_encode($bytes);
+
+        $response = Http::timeout(config('services.gemini.analyze_timeout'))
+            ->connectTimeout(15)
+            ->retry(2, 800, throw: false)
+            ->withHeaders(['x-goog-api-key' => $apiKey])
+            ->post($base.'/v1beta/models/'.$model.':generateContent', [
+                'system_instruction' => ['parts' => [['text' => $this->analysisSystemPrompt()]]],
+                'contents' => [[
+                    'role' => 'user',
+                    'parts' => [
+                        ['inline_data' => ['mime_type' => $media, 'data' => $data]],
+                        ['text' => 'สร้างฮีโร่สเลอปี้ในอนาคตของฉันเป็น JSON'],
+                    ],
+                ]],
+                'generationConfig' => ['responseMimeType' => 'application/json'],
+            ])
+            ->throw()
+            ->json();
+
+        return $this->extractJson($response['candidates'][0]['content']['parts'][0]['text'] ?? '');
+    }
+
+    /**
+     * Generate the avatar with Gemini 2.5 Flash Image ("Nano Banana"). When a
+     * reference photo is available it is sent alongside the prompt so the
+     * character resembles the player; otherwise plain text-to-image.
+     */
+    protected function generateWithGemini(?string $bytes, string $mime, array $analysis, string $apiKey): ?string
+    {
+        $base = rtrim(config('services.gemini.base_url'), '/');
+        $model = config('services.gemini.image_model');
+        $prompt = $this->imagePrompt($analysis);
+
+        $parts = [['text' => $prompt]];
+
+        if (config('services.gemini.use_reference') && $bytes !== null && $bytes !== '') {
+            $parts[] = ['inline_data' => ['mime_type' => $this->mediaType($mime), 'data' => base64_encode($bytes)]];
+        }
+
+        $payload = Http::timeout(config('services.gemini.image_timeout'))
+            ->connectTimeout(15)
+            ->retry(2, 1000, throw: false)
+            ->withHeaders(['x-goog-api-key' => $apiKey])
+            ->post($base.'/v1beta/models/'.$model.':generateContent', [
+                'contents' => [['role' => 'user', 'parts' => $parts]],
+            ])
+            ->throw()
+            ->json();
+
+        // Gemini returns the image inline among the response parts.
+        $b64 = null;
+        foreach ($payload['candidates'][0]['content']['parts'] ?? [] as $part) {
+            $b64 = $part['inlineData']['data'] ?? $part['inline_data']['data'] ?? null;
+            if ($b64) {
+                break;
+            }
+        }
+
+        if (! $b64) {
+            return null;
+        }
+
+        $storedPath = 'avatars/'.Str::uuid()->toString().'.png';
+        $this->store($storedPath, base64_decode($b64));
+
+        return $storedPath;
+    }
+
     protected function analysisSystemPrompt(): string
     {
         return <<<'PROMPT'
 You are a playful avatar game engine for a kids & family slush drink shop.
-Look at the photo ONLY to invent a fun, imaginary "future hero" persona.
+Look at the photo ONLY to invent a fun, inspiring "future career self" persona.
 NEVER describe or guess sensitive attributes: no age, gender, race, ethnicity,
 health, body or appearance judgements. Keep everything cheerful and kid-safe.
 Respond in Thai for the text fields. Return ONLY a strict JSON object with keys:
 character_name (string, can be English-style hero name),
-future_role (Thai), personality (Thai), slush_flavor (English flavor name),
+future_role (Thai — a REAL, recognizable and inspiring career, e.g. doctor,
+astronaut, chef, scientist, engineer, pilot, teacher, veterinarian, architect,
+firefighter, nurse, athlete, photographer. Pick ONE. Do NOT use fantasy,
+superhero, guardian or magical roles),
+outfit_en (a short ENGLISH description of the REAL professional uniform/attire
+for that exact career, with authentic, recognizable clothing, tools and props
+so the job is obvious at a glance, given only a light modern futuristic touch —
+e.g. "a doctor in a clean white medical coat with a stethoscope and a digital
+health scanner" or "an astronaut in a white-and-blue space suit with mission
+patches, holding the helmet"),
+personality (Thai), slush_flavor (English flavor name),
 slush_color (one of: pink, blue, green, yellow, purple, orange, red),
 special_power (Thai), coupon (one of: "ลด 10%", "ลด 15%", "ฟรีท็อปปิ้ง"),
 short_caption (Thai, upbeat one-liner). No markdown, no extra text.

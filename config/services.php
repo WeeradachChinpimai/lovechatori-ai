@@ -51,6 +51,31 @@ return [
         'base_url' => env('ANTHROPIC_BASE_URL', 'https://api.anthropic.com'),
     ],
 
+    // Master switch for the avatar AI back-end:
+    //   AI_USE_GEMINI=true  -> Google Gemini (analysis + image)
+    //   AI_USE_GEMINI=false -> OpenAI/Anthropic (analysis) + OpenAI (image)
+    // Either way, any error degrades gracefully to the offline fallback.
+    'ai' => [
+        'use_gemini' => (bool) env('AI_USE_GEMINI', false),
+    ],
+
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com'),
+
+        // Vision model for the fun analysis step (image -> JSON).
+        'text_model' => env('GEMINI_TEXT_MODEL', 'gemini-2.5-flash'),
+
+        // Image model for avatar generation (Gemini 2.5 Flash Image / "Nano Banana").
+        'image_model' => env('GEMINI_IMAGE_MODEL', 'gemini-2.5-flash-image'),
+        // Pass the uploaded photo as a reference image for likeness.
+        'use_reference' => (bool) env('GEMINI_IMAGE_USE_REFERENCE', true),
+
+        // Network timeouts (seconds).
+        'analyze_timeout' => (int) env('GEMINI_ANALYZE_TIMEOUT', 20),
+        'image_timeout' => (int) env('GEMINI_IMAGE_TIMEOUT', 60),
+    ],
+
     'openai' => [
         'key' => env('OPENAI_API_KEY'),
         'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com'),

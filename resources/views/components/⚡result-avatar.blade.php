@@ -63,14 +63,18 @@ new class extends Component
         }
      }">
 
-    <x-app-header :back="route('play.upload')">
+    {{-- App bar: back (left) + title (center) + share (right) on one row --}}
+    <div class="relative flex min-h-11 items-center justify-center">
+        <a href="{{ route('play.upload') }}" wire:navigate aria-label="กลับ"
+           class="absolute left-0 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-chillo-blue shadow-soft ring-1 ring-soft transition active:scale-95">
+            <x-icon name="arrow-left" class="h-5 w-5" />
+        </a>
+        <h1 class="px-12 text-center text-lg font-extrabold leading-tight text-chillo-blue">นี่คือตัวตนใน<span class="text-chillo-orange">อนาคต</span>ของคุณ! 🎉</h1>
         <button type="button" @click="share()" aria-label="แชร์"
-                class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-chillo-blue shadow-soft ring-1 ring-soft transition active:scale-95">
+                class="absolute right-0 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-chillo-blue shadow-soft ring-1 ring-soft transition active:scale-95">
             <x-icon name="share-2" class="h-5 w-5" />
         </button>
-    </x-app-header>
-
-    <h1 class="mt-4 text-center text-2xl font-extrabold leading-tight text-chillo-blue">นี่คือตัวตนใน<span class="text-chillo-orange">อนาคต</span>ของคุณ! 🎉</h1>
+    </div>
 
     {{-- Avatar poster (real AI-generated image) --}}
     <div class="relative mt-4 overflow-hidden rounded-[32px] border border-soft bg-white shadow-soft">

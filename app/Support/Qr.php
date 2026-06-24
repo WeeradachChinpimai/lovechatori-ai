@@ -12,7 +12,7 @@ use Endroid\QrCode\Writer\SvgWriter;
  */
 class Qr
 {
-    public static function dataUri(string $data, int $size = 150, array $rgb = [255, 127, 182]): string
+    public static function dataUri(string $data, int $size = 150, array $rgb = [6, 74, 168]): string
     {
         $result = (new Builder(
             writer: new SvgWriter(),

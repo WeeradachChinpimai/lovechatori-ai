@@ -81,16 +81,14 @@ new class extends Component
 
     {{-- Working state --}}
     <template x-if="!failed">
-        <div class="flex flex-1 flex-col items-center justify-center text-center">
+        <div class="flex flex-1 flex-col items-center justify-start pt-2 text-center">
             {{-- Circular AI illustration with rotating progress ring --}}
             <div class="relative flex h-48 w-48 items-center justify-center">
                 <div class="absolute inset-0 animate-spinslow rounded-full border-[6px] border-dashed border-chillo-blue/30"></div>
                 <div class="absolute -inset-1 animate-sparkle text-chillo-orange" style="top:-4px;right:8px"><x-icon name="sparkles" class="h-7 w-7" /></div>
-                {{-- IMAGE: CHILLO mascot + slushy cup + AI badge, generating an avatar --}}
-                <x-image-placeholder
-                    caption="Mascot กำลังสร้าง Avatar"
-                    note="CHILLO mascot with slushy cup and AI badge, generating avatar, ice & sparkle"
-                    class="h-40 w-40 rounded-full" />
+                {{-- CHILLO mascot illustration while the avatar is generating --}}
+                <img src="{{ asset('2.webp') }}" alt="CHILLO mascot กำลังสร้าง Avatar"
+                     width="160" height="160" class="h-40 w-40 rounded-full object-cover">
             </div>
 
             <h2 class="mt-7 text-2xl font-extrabold text-chillo-blue">กำลังสร้าง Avatar ของคุณ</h2>
@@ -141,11 +139,9 @@ new class extends Component
 
             {{-- Friendly status card --}}
             <div class="mt-5 flex w-full max-w-xs items-center gap-3 rounded-3xl border border-soft bg-chillo-blue-light/60 p-3 text-left">
-                {{-- IMAGE: small CHILLO mascot head smiling / winking --}}
-                <!-- IMAGE PLACEHOLDER: small CHILLO mascot head smiling or winking -->
-                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-chillo-blue/30 bg-white text-chillo-blue/60">
-                    <x-icon name="image" class="h-5 w-5" />
-                </span>
+                {{-- CHILLO slushy cup decoration --}}
+                <img src="{{ asset('element-1-camera.webp') }}" alt="" aria-hidden="true"
+                     class="h-14 w-14 shrink-0 object-contain">
                 <p class="text-sm font-semibold leading-snug text-chillo-blue">
                     AI กำลังครีเอทลุคที่ใช่ และรสชาติที่ชอบให้คุณอยู่!
                 </p>
