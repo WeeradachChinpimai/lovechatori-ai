@@ -27,7 +27,7 @@ new class extends Component
 
     {{-- Start button (above the steps, with a bold prominent shadow) --}}
     <x-btn variant="primary" :href="route('play.upload')" wire:navigate icon="sparkles" trailing="arrow-right"
-           class="mt-7 !shadow-[0_18px_36px_-6px_rgba(255,106,0,0.6)]">
+           class="mt-7 animate-ctabounce !shadow-[0_18px_36px_-6px_rgba(255,106,0,0.6)]">
         เริ่มสร้าง Avatar ของฉัน
     </x-btn>
 

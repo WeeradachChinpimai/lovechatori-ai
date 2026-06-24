@@ -232,11 +232,12 @@ new class extends Component
 
         {{-- Submit --}}
         <button type="submit" x-bind:disabled="busy || !$wire.photo" wire:loading.attr="disabled" wire:target="submit"
+                x-bind:class="($wire.photo && !busy) ? 'animate-ctabounce' : ''"
                 class="relative mt-4 inline-flex min-h-[58px] items-center justify-center gap-2 rounded-full bg-chillo-orange px-6 text-lg font-extrabold text-white shadow-[0_18px_36px_-6px_rgba(255,106,0,0.6)] transition active:scale-[0.98] disabled:opacity-50 disabled:shadow-none disabled:active:scale-100">
             <span wire:loading.remove wire:target="submit" class="inline-flex items-center gap-2"><x-icon name="sparkles" class="h-5 w-5" /> สร้าง Avatar เลย</span>
             <span wire:loading wire:target="submit">กำลังเริ่ม…</span>
             <span wire:loading.remove wire:target="submit" class="absolute right-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/25">
-                <x-icon name="chevron-right" class="h-5 w-5" />
+                <x-icon name="arrow-right" class="h-5 w-5" />
             </span>
         </button>
 
