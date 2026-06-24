@@ -25,8 +25,14 @@ new class extends Component
         </p>
     </div>
 
+    {{-- Start button (above the steps, with a bold prominent shadow) --}}
+    <x-btn variant="primary" :href="route('play.upload')" wire:navigate icon="sparkles" trailing="arrow-right"
+           class="mt-7 !shadow-[0_18px_36px_-6px_rgba(255,106,0,0.6)]">
+        เริ่มสร้าง Avatar ของฉัน
+    </x-btn>
+
     {{-- 3 steps --}}
-    <div class="mt-7 grid grid-cols-3 gap-2.5">
+    <div class="mt-6 grid grid-cols-3 gap-2.5">
         @php
             $steps = [
                 ['img' => '1.webp', 'label' => 'ถ่ายรูป',        'desc' => 'ถ่ายรูปใบหน้าของคุณ ให้ชัดและสว่าง'],
@@ -43,11 +49,6 @@ new class extends Component
             </div>
         @endforeach
     </div>
-
-    {{-- Start button --}}
-    <x-btn variant="primary" :href="route('play.upload')" wire:navigate icon="sparkles" trailing="arrow-right" class="mt-8">
-        เริ่มสร้าง Avatar ของฉัน
-    </x-btn>
 
     {{-- Trust strip --}}
     <div class="mt-5 flex items-center justify-center gap-2.5 text-[11px] font-semibold text-ink-soft">

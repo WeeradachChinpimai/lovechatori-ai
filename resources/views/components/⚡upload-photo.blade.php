@@ -49,7 +49,7 @@ new class extends Component
     </div>
     <p class="mt-1 text-center text-sm text-ink-soft">ถ่ายหน้าตรง แสงสว่าง ยิ้มได้เลย!</p>
 
-    <form wire:submit="submit" class="mt-5 flex flex-1 flex-col"
+    <form wire:submit="submit" class="mt-4 flex flex-1 flex-col"
           x-data="{
               cam: false, stream: null, facing: 'user', camError: '', busy: false, previewUrl: '',
               async start() {
@@ -154,7 +154,7 @@ new class extends Component
         {{-- decorative CHILLO slushy cup peeking from the bottom-left corner --}}
         <img src="{{ asset('element-1-camera.webp') }}" alt="" aria-hidden="true"
              class="pointer-events-none absolute -bottom-6 -left-6 z-10 w-24 select-none drop-shadow-xl">
-        <div class="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-[32px] border-2 border-dashed border-y-chillo-sky/40 border-l-chillo-blue border-r-chillo-orange bg-[#F7FBFF]">
+        <div class="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-[32px] border-2 border-dashed border-y-chillo-sky/40 border-l-chillo-blue border-r-chillo-orange bg-[#F7FBFF]">
             {{-- live camera feed --}}
             <video x-ref="video" x-show="cam" autoplay playsinline muted
                    class="absolute inset-0 h-full w-full object-cover" :class="facing === 'user' && 'scale-x-[-1]'"></video>
@@ -223,7 +223,7 @@ new class extends Component
         </div>
 
         {{-- Consent --}}
-        <label class="mt-5 flex items-start gap-3 rounded-2xl border border-soft bg-white p-4 text-sm text-ink-soft shadow-soft">
+        <label class="mt-4 flex items-start gap-3 rounded-2xl border border-soft bg-white p-3 text-[13px] leading-snug text-ink-soft shadow-soft">
             <span class="mt-0.5 text-chillo-blue"><x-icon name="shield-check" class="h-6 w-6" /></span>
             <input type="checkbox" wire:model="consent" class="mt-0.5 h-5 w-5 shrink-0 rounded accent-chillo-orange">
             <span>รูปของคุณจะใช้เพื่อสร้าง Avatar เท่านั้น ไม่เก็บข้อมูลส่วนตัว และจะถูกลบอัตโนมัติภายใน <span class="font-bold text-ink">{{ config('slush.image_retention_hours') }} ชั่วโมง</span></span>
@@ -232,7 +232,7 @@ new class extends Component
 
         {{-- Submit --}}
         <button type="submit" x-bind:disabled="busy || !$wire.photo" wire:loading.attr="disabled" wire:target="submit"
-                class="relative mt-6 inline-flex min-h-[56px] items-center justify-center gap-2 rounded-full bg-chillo-orange px-6 text-lg font-extrabold text-white shadow-button transition active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100">
+                class="relative mt-4 inline-flex min-h-[58px] items-center justify-center gap-2 rounded-full bg-chillo-orange px-6 text-lg font-extrabold text-white shadow-[0_18px_36px_-6px_rgba(255,106,0,0.6)] transition active:scale-[0.98] disabled:opacity-50 disabled:shadow-none disabled:active:scale-100">
             <span wire:loading.remove wire:target="submit" class="inline-flex items-center gap-2"><x-icon name="sparkles" class="h-5 w-5" /> สร้าง Avatar เลย</span>
             <span wire:loading wire:target="submit">กำลังเริ่ม…</span>
             <span wire:loading.remove wire:target="submit" class="absolute right-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/25">
