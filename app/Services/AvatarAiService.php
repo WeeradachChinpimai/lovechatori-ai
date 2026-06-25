@@ -190,7 +190,10 @@ class AvatarAiService
             ."colors — cute and friendly, but always true to the person's real face. NOT photoreal, NOT a flat 2D cartoon. "
             ."The character has a clear future profession: dress them in {$outfit}. "
             ."Show profession-specific clothing, accessories and props so the career is obvious at a glance. "
-            ."The character is holding {$drink}. "
+            ."The character is firmly holding {$drink} in ONE hand, with their fingers clearly wrapped around the "
+            ."cup so it is physically gripped and resting in the hand — the cup must NOT float, hover or sit "
+            ."detached beside the character. Any profession tools or props go in the OTHER hand, are worn, or sit "
+            ."in the background, and must never replace the slush cup in the holding hand. "
             ."Place them in a bright, colorful, slightly futuristic CHILLO-themed background scene that clearly "
             ."matches their future profession (for example a science lab for a scientist, a kitchen for a chef, "
             ."a space station for an astronaut, a cockpit for a pilot), with soft glowing ice-city and slush vibes. "
@@ -290,9 +293,10 @@ class AvatarAiService
     /** Extra instruction appended when a real drink-cup reference image is attached. */
     protected function drinkReferenceInstruction(): string
     {
-        return 'Use the exact slush drink cup shown in the additional reference image as the cup the '
-            .'character is holding — match its color, contents, toppings and CHILLO logo precisely; '
-            .'do not invent a different cup.';
+        return 'Match the drink cup design from the additional reference image — its color, contents, toppings '
+            .'and CHILLO logo — but RE-DRAW that cup naturally inside the character\'s hand at a believable '
+            .'angle, gripped by the fingers and tilted to fit the pose. Do NOT paste it as a flat, floating or '
+            .'detached object, and do not change its flavor design.';
     }
 
     /**
@@ -383,7 +387,13 @@ class AvatarAiService
                         ['text' => 'สร้างฮีโร่สเลอปี้ในอนาคตของฉันเป็น JSON'],
                     ],
                 ]],
-                'generationConfig' => ['responseMimeType' => 'application/json'],
+                'generationConfig' => [
+                    'responseMimeType' => 'application/json',
+                    // This is a simple image->JSON task; disabling "thinking"
+                    // makes gemini-2.5-flash respond several seconds faster
+                    // with no quality loss for this use case.
+                    'thinkingConfig' => ['thinkingBudget' => 0],
+                ],
             ])
             ->throw()
             ->json();
