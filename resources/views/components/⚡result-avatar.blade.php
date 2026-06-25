@@ -96,16 +96,10 @@ new class extends Component
 
     {{-- Character info --}}
     <div class="mt-5 space-y-3">
-        <div class="text-center">
-            <p class="text-xs font-bold uppercase tracking-wide text-chillo-orange">ชื่อตัวละคร</p>
-            <p class="text-2xl font-extrabold text-chillo-blue">{{ $analysis['character_name'] ?? 'Slush Hero' }}</p>
-        </div>
-
         <div class="grid grid-cols-1 gap-3">
             @php
                 $rows = [
                     ['icon' => 'shield',   'label' => 'บทบาทในอนาคต',           'value' => $analysis['future_role'] ?? '-',  'accent' => false],
-                    ['icon' => 'zap',      'label' => 'พลังพิเศษ',               'value' => $analysis['special_power'] ?? '-', 'accent' => false],
                     ['icon' => 'cup-soda', 'label' => 'รสสเลอปี้ที่เหมาะกับคุณ', 'value' => $analysis['slush_flavor'] ?? '-', 'accent' => true],
                 ];
             @endphp
@@ -127,18 +121,12 @@ new class extends Component
         @endif
     </div>
 
-    {{-- Coupon (real code + QR) --}}
+    {{-- Discount banner: fixed 5-baht off (no code / QR) --}}
     @if ($session->coupon)
-        <div class="relative mt-6 overflow-hidden rounded-[28px] bg-chillo-orange p-5 text-white shadow-button">
-            <p class="inline-flex items-center gap-2 text-sm font-bold opacity-95"><x-icon name="ticket-percent" class="h-5 w-5" /> คูปองส่วนลดของคุณ</p>
-            <p class="mt-1 text-3xl font-extrabold">{{ $session->coupon->discount_label }}</p>
-            <div class="mt-3 flex items-center justify-between gap-3">
-                <span class="rounded-xl bg-white/25 px-3 py-2 font-mono text-lg font-bold tracking-wider">{{ $session->coupon->code }}</span>
-                <div class="rounded-xl bg-white p-1.5">
-                    <img src="{{ \App\Support\Qr::dataUri($shareUrl, 72, [60, 60, 60]) }}" alt="QR คูปอง" width="72" height="72">
-                </div>
-            </div>
-            <p class="mt-3 text-xs opacity-95">ใช้ได้ถึง {{ optional($session->coupon->expired_at)->format('d/m/Y H:i') }} น. — แสดงรหัสนี้ที่หน้าร้าน</p>
+        <div class="relative mt-6 overflow-hidden rounded-[28px] bg-chillo-orange p-5 text-center text-white shadow-button">
+            <p class="inline-flex items-center justify-center gap-2 text-sm font-bold opacity-95"><x-icon name="ticket-percent" class="h-5 w-5" /> คูปองส่วนลดของคุณ</p>
+            <p class="mt-1 text-4xl font-extrabold">ส่วนลด 5 บาท</p>
+            <p class="mt-2 text-xs opacity-95">ใช้ได้ถึง {{ optional($session->coupon->expired_at)->format('d/m/Y H:i') }} น. — แสดงหน้านี้ที่ร้าน</p>
         </div>
     @endif
 
@@ -148,7 +136,7 @@ new class extends Component
             <button type="button" x-on:click="download()" x-bind:disabled="saving"
                class="inline-flex min-h-[56px] items-center justify-center gap-2 rounded-full bg-chillo-blue px-4 text-base font-extrabold text-white shadow-soft transition active:scale-[0.98] disabled:opacity-60">
                 <x-icon name="download" class="h-5 w-5" />
-                <span x-show="!saving">บันทึกผลลัพธ์</span>
+                <span x-show="!saving">บันทึกรูป</span>
                 <span x-show="saving" style="display:none">กำลังบันทึก…</span>
             </button>
         @else

@@ -20,6 +20,7 @@ class SlushAvatarPoster
         'purple' => ['#b98cff', '#9a63f0', '#ece0ff'],
         'orange' => ['#ff9f54', '#f57c20', '#ffe2c7'],
         'red' => ['#ff6b7d', '#e8485c', '#ffd5da'],
+        'brown' => ['#a9744f', '#7c4a2d', '#e8d5c4'],
     ];
 
     public static function make(array $analysis): string
