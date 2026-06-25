@@ -170,20 +170,20 @@ class AvatarAiService
         $color = $analysis['slush_color'] ?? 'pink';
         $outfit = $analysis['outfit_en'] ?? 'a detailed, colorful future-career uniform with themed accessories and props';
 
-        return "Create a cute, bright and vibrant 3D animated character avatar based on the uploaded face "
-            ."reference, in a polished Disney/Pixar-style cute 3D render: big sparkly expressive eyes, soft "
-            ."rounded adorable features, glossy smooth shading, rich saturated cheerful colors, full of life and "
-            ."charm. Cute and playful, NOT photoreal, NOT a flat 2D cartoon. "
-            ."IMPORTANT for likeness: keep the person's real face shape, facial features and exact hairstyle from "
-            ."the uploaded photo, adapted into this cute 3D style so it clearly looks like them — and make them "
-            ."look cool and stylish. "
+        return "Transform the real person in the provided photo into a cute, bright 3D animated-style avatar. "
+            ."STRONGLY preserve their real identity and likeness: keep the SAME face shape, facial features, eyes, "
+            ."nose, mouth, eyebrows, skin tone and exact hairstyle as in the photo, so it is clearly and "
+            ."recognisably the same person — only restyled, NOT a different character. "
+            ."Keep natural, realistic facial proportions; do NOT exaggerate, enlarge or anime-fy the eyes or head. "
+            ."Render in a polished, glossy Disney/Pixar-style 3D look with smooth shading and bright cheerful "
+            ."colors — cute and friendly, but always true to the person's real face. NOT photoreal, NOT a flat 2D cartoon. "
             ."The character has a clear future profession: dress them in {$outfit}. "
             ."Show profession-specific clothing, accessories and props so the career is obvious at a glance. "
             ."The character is holding a {$color} {$flavor} slush drink. "
             ."Place them in a bright, colorful, slightly futuristic CHILLO-themed background scene that clearly "
             ."matches their future profession (for example a science lab for a scientist, a kitchen for a chef, "
             ."a space station for an astronaut, a cockpit for a pilot), with soft glowing ice-city and slush vibes. "
-            ."Tasteful blue and orange brand accents, happy confident expression, upper-body framing so the outfit "
+            ."Tasteful blue and orange brand accents, happy friendly expression, upper-body framing so the outfit "
             ."is clearly visible, high quality, square 1:1 composition with the character centered.";
     }
 
